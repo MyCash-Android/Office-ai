@@ -7,6 +7,10 @@ from ultralytics import YOLO
 from datetime import datetime
 import cvzone
 
+from dotenv import load_dotenv
+
+load_dotenv()
+
 app = Flask(__name__)
 CORS(app)
 app.config["APPLICATION_ROOT"] = "/office-ai"
