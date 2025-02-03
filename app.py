@@ -9,6 +9,7 @@ import cvzone
 
 app = Flask(__name__)
 CORS(app)
+app.config["APPLICATION_ROOT"] = "/office-ai"
 
 model = YOLO("best.pt")
 names = model.names
