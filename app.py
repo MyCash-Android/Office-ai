@@ -65,8 +65,7 @@ exit2 = {}
 counted_enter2 = []
 counted_exit2 = []
 
-
-    def process_frame(frame, frame_count, frame_skip=3):
+def process_frame(frame, frame_count, frame_skip=3):
         global enter, exit, counted_enter, counted_exit
         global enter2, exit2, counted_enter2, counted_exit2
         global active_people, entered_zone
@@ -141,7 +140,7 @@ counted_exit2 = []
         return frame
 
 
-    def generate():
+def generate():
         global cap
         rtsp_url = 'rtsp://admin:Mmmycash@6699@mycash.ddns.net:56100?tcp'
         #rtsp_url = 'testVid.mp4'
