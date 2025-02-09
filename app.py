@@ -182,9 +182,6 @@ def generate():
     global cap
     rtsp_url = 'rtsp://admin:Mmmycash@6699@mycash.ddns.net:56100?tcp'
     cap = cv2.VideoCapture(rtsp_url)
-    frame_skip = 3  
-    frame_count = 0
-
     while True:
         ret, frame = cap.read()
         if not ret:
@@ -194,11 +191,8 @@ def generate():
             cap = cv2.VideoCapture(rtsp_url)
             continue
 
-        frame_count += 1
-        if frame_count % frame_skip == 0:  
-            frame = process_frame(frame)
-
-        _, buffer = cv2.imencode(".jpg", frame, [cv2.IMWRITE_JPEG_QUALITY, 80])
+        frame = process_frame(frame)
+        _, buffer = cv2.imencode(".jpg", frame)
         frame_bytes = buffer.tobytes()
 
         yield (
