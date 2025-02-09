@@ -6,10 +6,25 @@ import numpy as np
 from ultralytics import YOLO
 from datetime import datetime
 import cvzone
+import pyrebase
 
 from dotenv import load_dotenv
 
 load_dotenv()
+
+firebaseConfig = {
+  "apiKey": "AIzaSyBvR_ldDK5y1HTi1UrKUbzHcQWNDknM09o",
+  "authDomain": "mycash-ai.firebaseapp.com",
+  "databaseURL": "https://mycash-ai-default-rtdb.asia-southeast1.firebasedatabase.app/",
+  "projectId": "mycash-ai",
+  "storageBucket": "mycash-ai.firebasestorage.app",
+  "messagingSenderId": "757415222278",
+  "appId": "1:757415222278:web:2f73933891270feba33787",
+  "measurementId": "G-8LFV5DN71J"
+}
+
+firebase = pyrebase.initialize_app(firebaseConfig)
+db = firebase.database()
 
 app = Flask(__name__)
 CORS(app)
@@ -27,13 +42,13 @@ logs = []
 
 def add_log(person_id, action):
     global logs
-    logs.append(
-        {
-            "time": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-            "person_id": str(person_id),
-            "action": action,
-        }
-    )
+    log_data = {
+        "time": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "person_id": str(person_id),
+        "action": action
+    }
+    logs.append(log_data)
+    db.child("logs").push(log_data)  
     if len(logs) > 100:
         logs.pop(0)
 
@@ -134,10 +149,10 @@ def process_frame(frame):
                             counted_exit2.append(track_id)
                             add_log(c, "Exited Zone")
 
-    cvzone.putTextRect(frame, f"Group1 Enter: {len(counted_enter)}", (50, 60), 1, 1)
-    cvzone.putTextRect(frame, f"Group1 Exit: {len(counted_exit)}", (50, 80), 1, 1)
-    cvzone.putTextRect(frame, f"Group2 Enter: {len(counted_enter2)}", (50, 110), 1, 1)
-    cvzone.putTextRect(frame, f"Group2 Exit: {len(counted_exit2)}", (50, 130), 1, 1)
+    #cvzone.putTextRect(frame, f"Group1 Enter: {len(counted_enter)}", (50, 60), 1, 1)
+    #cvzone.putTextRect(frame, f"Group1 Exit: {len(counted_exit)}", (50, 80), 1, 1)
+    #cvzone.putTextRect(frame, f"Group2 Enter: {len(counted_enter2)}", (50, 110), 1, 1)
+    #cvzone.putTextRect(frame, f"Group2 Exit: {len(counted_exit2)}", (50, 130), 1, 1)
 
     active_people = len(counted_enter) - len(counted_exit)
     entered_zone = len(counted_enter)
@@ -188,10 +203,15 @@ def video_feed():
     return Response(generate(), mimetype="multipart/x-mixed-replace; boundary=frame")
 
 
-@app.route("/statistics")
+@app.route('/statistics')
 def statistics():
     global active_people, entered_zone
-    return jsonify({"active_people": active_people, "entered_zone": entered_zone})
+    stats = {
+        'active_people': active_people,
+        'entered_zone': entered_zone
+    }
+    db.child("statistics").set(stats) 
+    return jsonify(stats)
 
 
 @app.route("/logs")
