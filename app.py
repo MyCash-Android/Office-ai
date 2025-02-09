@@ -34,6 +34,8 @@ model = YOLO("best.pt")
 names = model.names
 
 cap = cv2.VideoCapture("rtsp://admin:Mmmycash@6699@mycash.ddns.net:56100")
+cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)
+cap.set(cv2.CAP_PROP_FPS, 30)
 
 active_people = 0
 entered_zone = 0
@@ -178,8 +180,11 @@ def process_frame(frame):
 
 def generate():
     global cap
-    rtsp_url = "rtsp://admin:Mmmycash@6699@mycash.ddns.net:56100?tcp"
+    rtsp_url = 'rtsp://admin:Mmmycash@6699@mycash.ddns.net:56100?tcp'
     cap = cv2.VideoCapture(rtsp_url)
+    frame_skip = 3  
+    frame_count = 0
+
     while True:
         ret, frame = cap.read()
         if not ret:
@@ -189,12 +194,16 @@ def generate():
             cap = cv2.VideoCapture(rtsp_url)
             continue
 
-        frame = process_frame(frame)
-        _, buffer = cv2.imencode(".jpg", frame)
+        frame_count += 1
+        if frame_count % frame_skip == 0:  
+            frame = process_frame(frame)
+
+        _, buffer = cv2.imencode(".jpg", frame, [cv2.IMWRITE_JPEG_QUALITY, 80])
         frame_bytes = buffer.tobytes()
 
         yield (
-            b"--frame\r\n" b"Content-Type: image/jpeg\r\n\r\n" + frame_bytes + b"\r\n"
+            b"--frame\r\n"
+            b"Content-Type: image/jpeg\r\n\r\n" + frame_bytes + b"\r\n"
         )
 
 
