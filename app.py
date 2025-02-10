@@ -92,6 +92,15 @@ ffmpeg_cmd = [
     "-f",
     "flv",
     "rtmp://localhost/live/office",
+    "-f",
+    "hls",
+    "-hls_time",
+    "2",
+    "-hls_list_size",
+    "10",
+    "-hls_flags",
+    "delete_segments",
+    "/var/www/html/hls/office.m3u8",
 ]
 
 ffmpeg_process = subprocess.Popen(ffmpeg_cmd, stdin=subprocess.PIPE)
