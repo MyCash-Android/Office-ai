@@ -9,6 +9,7 @@ import cvzone
 import pyrebase
 import subprocess
 import time
+import threading
 
 from dotenv import load_dotenv
 
@@ -232,12 +233,7 @@ def get_logs():
 
 
 if __name__ == "__main__":
-    """try:
-        generate()
-    except KeyboardInterrupt:
-        print("Streaming interrupted by user.")
-    except Exception as e:
-        print(f"Error: {e}")"""
+    capture_thread = threading.Thread(target=generate, daemon=True)
+    capture_thread.start()
     app.run(host="0.0.0.0", port=5001)
 
-generate()
