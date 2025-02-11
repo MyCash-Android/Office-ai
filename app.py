@@ -194,7 +194,7 @@ def generate():
     if not cap.isOpened():
         print("ERROR: Unable to open RTSP stream. Check camera URL.")
         return
-    frame_skip = 3
+    frame_skip = 1
     frame_count = 0
     while True:
         ret, frame = cap.read()
