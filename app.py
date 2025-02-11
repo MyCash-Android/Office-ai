@@ -8,6 +8,7 @@ from datetime import datetime
 import cvzone
 import pyrebase
 import subprocess
+import time
 
 from dotenv import load_dotenv
 
@@ -34,9 +35,7 @@ app.config["APPLICATION_ROOT"] = "/office-ai"
 model = YOLO("best.pt")
 names = model.names
 
-cap = cv2.VideoCapture("rtsp://admin:Mmmycash@6699@mycash.ddns.net:56100")
-cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)
-cap.set(cv2.CAP_PROP_FPS, 30)
+rtsp_url = "rtsp://admin:Mmmycash@6699@mycash.ddns.net:56100?tcp"
 
 active_people = 0
 entered_zone = 0
@@ -78,17 +77,17 @@ ffmpeg_cmd = [
     "-s",
     "1020x600",
     "-r",
-    "25",
+    "15",
     "-i",
     "-",
     "-c:v",
     "libx264",
     "-preset",
-    "veryfast",
+    "ultrafast",
     "-tune",
     "zerolatency",
     "-b:v",
-    "1500k",
+    "1000k",
     "-f",
     "flv",
     "rtmp://localhost/live/office",
@@ -103,15 +102,12 @@ ffmpeg_cmd = [
     "/var/www/html/hls/office.m3u8",
 ]
 
-ffmpeg_process = subprocess.Popen(ffmpeg_cmd, stdin=subprocess.PIPE)
 
 
-def process_frame(frame, frame_count, frame_skip=3):
+def process_frame(frame):
     global enter, exit, counted_enter, counted_exit
     global enter2, exit2, counted_enter2, counted_exit2
     global active_people, entered_zone
-    if frame_count % frame_skip != 0:
-        return None
     frame = cv2.resize(frame, (1020, 600))
     area1 = [(327, 292), (322, 328), (730, 328), (730, 292)]
     area2 = [(322, 336), (312, 372), (730, 372), (730, 336)]
@@ -192,10 +188,11 @@ def process_frame(frame, frame_count, frame_skip=3):
 
 
 def generate():
-    global cap
-    rtsp_url = "rtsp://admin:Mmmycash@6699@mycash.ddns.net:56100?tcp"
-    # rtsp_url = 'testVid.mp4'
+    ffmpeg_process = subprocess.Popen(ffmpeg_cmd, stdin=subprocess.PIPE)
     cap = cv2.VideoCapture(rtsp_url)
+    if not cap.isOpened():
+        print("ERROR: Unable to open RTSP stream. Check camera URL.")
+        return
     frame_skip = 3
     frame_count = 0
     while True:
@@ -203,19 +200,16 @@ def generate():
         if not ret:
             print("Failed to read frame, attempting to reconnect...")
             cap.release()
-            cv2.waitKey(1000)
+            time.sleep(1)
             cap = cv2.VideoCapture(rtsp_url)
             continue
         frame_count += 1
-        processed_frame = process_frame(frame, frame_count, frame_skip)
-        if processed_frame is None:
+        if frame_count % frame_skip != 0:
             continue
-        ffmpeg_process.stdin.write(processed_frame.tobytes())
-        _, buffer = cv2.imencode(".jpg", processed_frame)
-        frame_bytes = buffer.tobytes()
-        yield (
-            b"--frame\r\n" b"Content-Type: image/jpeg\r\n\r\n" + frame_bytes + b"\r\n"
-        )
+        frame = process_frame(frame)
+        if frame is None:
+            continue
+        ffmpeg_process.stdin.write(frame.tobytes())
 
 
 @app.route("/video_feed")
@@ -238,4 +232,10 @@ def get_logs():
 
 
 if __name__ == "__main__":
+    try:
+        generate()
+    except KeyboardInterrupt:
+        print("Streaming interrupted by user.")
+    except Exception as e:
+        print(f"Error: {e}")
     app.run(host="0.0.0.0", port=5001)
