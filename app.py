@@ -188,28 +188,34 @@ def process_frame(frame):
 
 
 def generate():
-    ffmpeg_process = subprocess.Popen(ffmpeg_cmd, stdin=subprocess.PIPE)
-    cap = cv2.VideoCapture(rtsp_url)
-    if not cap.isOpened():
-        print("ERROR: Unable to open RTSP stream. Check camera URL.")
-        return
-    frame_skip = 1
-    frame_count = 0
-    while True:
-        ret, frame = cap.read()
-        if not ret:
-            print("Failed to read frame, attempting to reconnect...")
-            cap.release()
-            time.sleep(1)
-            cap = cv2.VideoCapture(rtsp_url)
-            continue
-        frame_count += 1
-        if frame_count % frame_skip != 0:
-            continue
-        frame = process_frame(frame)
-        if frame is None:
-            continue
-        ffmpeg_process.stdin.write(frame.tobytes())
+    print("[DEBUG] generate() thread started.")
+    try:
+        ffmpeg_process = subprocess.Popen(ffmpeg_cmd, stdin=subprocess.PIPE)
+        cap = cv2.VideoCapture(rtsp_url)
+        if not cap.isOpened():
+            print("ERROR: Unable to open RTSP stream. Check camera URL.")
+            return
+        frame_skip = 1
+        frame_count = 0
+        while True:
+            ret, frame = cap.read()
+            if not ret:
+                print("Failed to read frame, attempting to reconnect...")
+                cap.release()
+                time.sleep(1)
+                cap = cv2.VideoCapture(rtsp_url)
+                continue
+            frame_count += 1
+            if frame_count % frame_skip != 0:
+                continue
+            frame = process_frame(frame)
+            if frame is None:
+                continue
+            ffmpeg_process.stdin.write(frame.tobytes())
+    except Exception as e:
+        print("[ERROR in generate()]:", e)
+    finally:
+        print("[DEBUG] generate() thread exiting.")
 
 
 # @app.route("/video_feed")
