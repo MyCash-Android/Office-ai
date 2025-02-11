@@ -230,12 +230,12 @@ def get_logs():
     global logs
     return jsonify(logs)
 
-
+generate()
 if __name__ == "__main__":
-    try:
+    """try:
         generate()
     except KeyboardInterrupt:
         print("Streaming interrupted by user.")
     except Exception as e:
-        print(f"Error: {e}")
+        print(f"Error: {e}")"""
     app.run(host="0.0.0.0", port=5001)
