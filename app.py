@@ -104,7 +104,6 @@ ffmpeg_cmd = [
 ]
 
 
-
 def process_frame(frame):
     global enter, exit, counted_enter, counted_exit
     global enter2, exit2, counted_enter2, counted_exit2
@@ -213,8 +212,8 @@ def generate():
         ffmpeg_process.stdin.write(frame.tobytes())
 
 
-#@app.route("/video_feed")
-#def video_feed():
+# @app.route("/video_feed")
+# def video_feed():
 #    return Response(generate(), mimetype="multipart/x-mixed-replace; boundary=frame")
 
 
@@ -233,7 +232,6 @@ def get_logs():
 
 
 if __name__ == "__main__":
-    capture_thread = threading.Thread(target=generate, daemon=True)
+    capture_thread = threading.Thread(target=generate)
     capture_thread.start()
     app.run(host="0.0.0.0", port=5001)
-
