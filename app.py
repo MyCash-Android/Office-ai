@@ -7,9 +7,6 @@ from ultralytics import YOLO
 from datetime import datetime
 import cvzone
 import pyrebase
-import subprocess
-import time
-import threading
 
 from dotenv import load_dotenv
 
@@ -36,7 +33,9 @@ app.config["APPLICATION_ROOT"] = "/office-ai"
 model = YOLO("best.pt")
 names = model.names
 
-rtsp_url = "rtsp://admin:Mmmycash@6699@mycash.ddns.net:56100?tcp"
+cap = cv2.VideoCapture("rtsp://admin:Mmmycash@6699@mycash.ddns.net:56100")
+cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)
+cap.set(cv2.CAP_PROP_FPS, 30)
 
 active_people = 0
 entered_zone = 0
@@ -66,48 +65,13 @@ exit2 = {}
 counted_enter2 = []
 counted_exit2 = []
 
-ffmpeg_cmd = [
-    "ffmpeg",
-    "-y",
-    "-f",
-    "rawvideo",
-    "-vcodec",
-    "rawvideo",
-    "-pix_fmt",
-    "bgr24",
-    "-s",
-    "1020x600",
-    "-r",
-    "15",
-    "-i",
-    "-",
-    "-c:v",
-    "libx264",
-    "-preset",
-    "ultrafast",
-    "-tune",
-    "zerolatency",
-    "-b:v",
-    "1000k",
-    "-f",
-    "flv",
-    "rtmp://localhost/live/office",
-    "-f",
-    "hls",
-    "-hls_time",
-    "2",
-    "-hls_list_size",
-    "10",
-    "-hls_flags",
-    "delete_segments",
-    "/var/www/html/hls/office.m3u8",
-]
 
-
-def process_frame(frame):
+def process_frame(frame, frame_count, frame_skip=3):
     global enter, exit, counted_enter, counted_exit
     global enter2, exit2, counted_enter2, counted_exit2
     global active_people, entered_zone
+    if frame_count % frame_skip != 0:
+        return None
     frame = cv2.resize(frame, (1020, 600))
     area1 = [(327, 292), (322, 328), (730, 328), (730, 292)]
     area2 = [(322, 336), (312, 372), (730, 372), (730, 336)]
@@ -188,39 +152,34 @@ def process_frame(frame):
 
 
 def generate():
-    print("[DEBUG] generate() thread started.")
-    try:
-        ffmpeg_process = subprocess.Popen(ffmpeg_cmd, stdin=subprocess.PIPE)
-        cap = cv2.VideoCapture(rtsp_url)
-        if not cap.isOpened():
-            print("ERROR: Unable to open RTSP stream. Check camera URL.")
-            return
-        frame_skip = 1
-        frame_count = 0
-        while True:
-            ret, frame = cap.read()
-            if not ret:
-                print("Failed to read frame, attempting to reconnect...")
-                cap.release()
-                time.sleep(1)
-                cap = cv2.VideoCapture(rtsp_url)
-                continue
-            frame_count += 1
-            if frame_count % frame_skip != 0:
-                continue
-            frame = process_frame(frame)
-            if frame is None:
-                continue
-            ffmpeg_process.stdin.write(frame.tobytes())
-    except Exception as e:
-        print("[ERROR in generate()]:", e)
-    finally:
-        print("[DEBUG] generate() thread exiting.")
+    global cap
+    rtsp_url = "rtsp://admin:Mmmycash@6699@mycash.ddns.net:56100?tcp"
+    # rtsp_url = 'testVid.mp4'
+    cap = cv2.VideoCapture(rtsp_url)
+    frame_skip = 3
+    frame_count = 0
+    while True:
+        ret, frame = cap.read()
+        if not ret:
+            print("Failed to read frame, attempting to reconnect...")
+            cap.release()
+            cv2.waitKey(1000)
+            cap = cv2.VideoCapture(rtsp_url)
+            continue
+        frame_count += 1
+        processed_frame = process_frame(frame, frame_count, frame_skip)
+        if processed_frame is None:
+            continue
+        _, buffer = cv2.imencode(".jpg", processed_frame)
+        frame_bytes = buffer.tobytes()
+        yield (
+            b"--frame\r\n" b"Content-Type: image/jpeg\r\n\r\n" + frame_bytes + b"\r\n"
+        )
 
 
-# @app.route("/video_feed")
-# def video_feed():
-#    return Response(generate(), mimetype="multipart/x-mixed-replace; boundary=frame")
+@app.route("/video_feed")
+def video_feed():
+    return Response(generate(), mimetype="multipart/x-mixed-replace; boundary=frame")
 
 
 @app.route("/statistics")
@@ -238,6 +197,4 @@ def get_logs():
 
 
 if __name__ == "__main__":
-    capture_thread = threading.Thread(target=generate)
-    capture_thread.start()
     app.run(host="0.0.0.0", port=5001)
