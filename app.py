@@ -212,9 +212,9 @@ def generate():
         ffmpeg_process.stdin.write(frame.tobytes())
 
 
-@app.route("/video_feed")
-def video_feed():
-    return Response(generate(), mimetype="multipart/x-mixed-replace; boundary=frame")
+#@app.route("/video_feed")
+#def video_feed():
+#    return Response(generate(), mimetype="multipart/x-mixed-replace; boundary=frame")
 
 
 @app.route("/statistics")
