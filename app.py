@@ -8,13 +8,10 @@ from datetime import datetime
 import cvzone
 import pyrebase
 import subprocess
-import time
-import threading
 
 from dotenv import load_dotenv
 
 load_dotenv()
-
 
 firebaseConfig = {
     "apiKey": "AIzaSyBvR_ldDK5y1HTi1UrKUbzHcQWNDknM09o",
@@ -37,9 +34,9 @@ app.config["APPLICATION_ROOT"] = "/office-ai"
 model = YOLO("best.pt")
 names = model.names
 
-latest_frame = None
-rtsp_url = "rtsp://admin:Mmmycash@6699@mycash.ddns.net:56100?tcp"
-cap = None  
+cap = cv2.VideoCapture("rtsp://admin:Mmmycash@6699@mycash.ddns.net:56100")
+cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)
+cap.set(cv2.CAP_PROP_FPS, 30)
 
 active_people = 0
 entered_zone = 0
@@ -106,7 +103,8 @@ ffmpeg_cmd = [
     "/var/www/html/hls/office.m3u8",
 ]
 
-ffmpeg_process = subprocess.Popen(ffmpeg_cmd, stdin=subprocess.PIPE, bufsize=0)
+ffmpeg_process = subprocess.Popen(ffmpeg_cmd, stdin=subprocess.PIPE)
+
 
 def process_frame(frame, frame_count, frame_skip=3):
     global enter, exit, counted_enter, counted_exit
@@ -193,50 +191,7 @@ def process_frame(frame, frame_count, frame_skip=3):
     return frame
 
 
-
-
-def capture_and_stream():
-    global cap, latest_frame
-    frame_skip = 3
-    frame_count = 0
-
-    cap = cv2.VideoCapture(rtsp_url)
-    
-    cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)
-    cap.set(cv2.CAP_PROP_FPS, 30)
-
-    while True:
-        ret, frame = cap.read()
-        if not ret:
-            print("Failed to read frame, attempting to reconnect...")
-            cap.release()
-            time.sleep(1)
-            cap = cv2.VideoCapture(rtsp_url)
-            continue
-
-        frame_count += 1
-        processed_frame = process_frame(frame, frame_count, frame_skip)
-        if processed_frame is None:
-            continue
-
-        processed_frame = cv2.resize(processed_frame, (1020, 600))
-
-        try:
-            ffmpeg_process.stdin.write(processed_frame.tobytes())
-            ffmpeg_process.stdin.flush()
-        except Exception as e:
-            print("Error writing to FFmpeg:", e)
-
-        ret2, buffer = cv2.imencode(".jpg", processed_frame)
-        if ret2:
-            latest_frame = buffer.tobytes()
-        else:
-            print("Failed to encode frame as JPEG.")
-
-        time.sleep(0.001)
-
-
-"""def generate():
+def generate():
     global cap
     rtsp_url = "rtsp://admin:Mmmycash@6699@mycash.ddns.net:56100?tcp"
     # rtsp_url = 'testVid.mp4'
@@ -260,20 +215,7 @@ def capture_and_stream():
         frame_bytes = buffer.tobytes()
         yield (
             b"--frame\r\n" b"Content-Type: image/jpeg\r\n\r\n" + frame_bytes + b"\r\n"
-        )"""
-
-def generate():
-    global latest_frame
-    while True:
-        if latest_frame is None:
-            time.sleep(0.01)
-            continue
-
-        yield (
-            b"--frame\r\n"
-            b"Content-Type: image/jpeg\r\n\r\n" + latest_frame + b"\r\n"
         )
-        time.sleep(0.04)
 
 
 @app.route("/video_feed")
@@ -296,6 +238,4 @@ def get_logs():
 
 
 if __name__ == "__main__":
-    capture_thread = threading.Thread(target=capture_and_stream, daemon=True)
-    capture_thread.start()
     app.run(host="0.0.0.0", port=5001)
