@@ -7,6 +7,7 @@ from ultralytics import YOLO
 from datetime import datetime
 import cvzone
 import pyrebase
+import requests
 
 from dotenv import load_dotenv
 
@@ -43,6 +44,8 @@ logs = []
 
 
 def add_log(person_id, action):
+    if person_id == 'P1': person_id = 1
+    if person_id == 'P2': person_id = 2
     global logs
     log_data = {
         "time": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
@@ -50,9 +53,25 @@ def add_log(person_id, action):
         "action": action,
     }
     logs.append(log_data)
-    db.child("logs").push(log_data)
+    current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    api_url = "https://backai.mycashtest.com/apiAdmin/employee/create_log"
+    params = {
+        "employee_id": person_id,
+        "type": action,
+        "date": current_time
+    }
     if len(logs) > 100:
         logs.pop(0)
+    try:
+        response = requests.get(api_url, params=params)
+        response.raise_for_status()  
+        print(f"Log added successfully: {response.text}")
+        return {"status": "success", "api_response": response.text}
+    except requests.RequestException as e:
+        print(f"Error adding log: {e}")
+        return {"status": "error", "message": str(e)}
+
+    
 
 
 enter = {}
@@ -130,7 +149,7 @@ def process_frame(frame, frame_count, frame_skip=3):
                         cv2.circle(frame, point, 4, (255, 0, 0), -1)
                         if track_id not in counted_enter2:
                             counted_enter2.append(track_id)
-                            add_log(c, "Entered Zone")
+                            add_log(c, 1)
                 result22 = cv2.pointPolygonTest(np.array(area4, np.int32), point, False)
                 if result22 >= 0:
                     exit2[track_id] = point
@@ -144,7 +163,7 @@ def process_frame(frame, frame_count, frame_skip=3):
                         cv2.circle(frame, point, 4, (255, 0, 0), -1)
                         if track_id not in counted_exit2:
                             counted_exit2.append(track_id)
-                            add_log(c, "Exited Zone")
+                            add_log(c, 2)
 
     active_people = len(counted_enter) - len(counted_exit)
     entered_zone = len(counted_enter)
