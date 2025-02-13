@@ -1,14 +1,16 @@
 import os
-from flask import Flask, Response, jsonify
-from flask_cors import CORS
 import cv2
 import numpy as np
-from ultralytics import YOLO
+import threading
+import time
+import subprocess
 from datetime import datetime
+from flask import Flask, Response, jsonify
+from flask_cors import CORS
+from ultralytics import YOLO
 import cvzone
 import pyrebase
 import requests
-
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -23,7 +25,6 @@ firebaseConfig = {
     "appId": "1:757415222278:web:2f73933891270feba33787",
     "measurementId": "G-8LFV5DN71J",
 }
-
 firebase = pyrebase.initialize_app(firebaseConfig)
 db = firebase.database()
 
@@ -31,17 +32,13 @@ app = Flask(__name__)
 CORS(app)
 app.config["APPLICATION_ROOT"] = "/office-ai"
 
+# Load YOLO model
 model = YOLO("best.pt")
 names = model.names
-
-cap = cv2.VideoCapture("rtsp://admin:Mmmycash@6699@mycash.ddns.net:56100")
-cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)
-cap.set(cv2.CAP_PROP_FPS, 30)
 
 active_people = 0
 entered_zone = 0
 logs = []
-
 
 def add_log(person_id, action):
     if person_id == 'P1': person_id = 1
@@ -66,26 +63,23 @@ def add_log(person_id, action):
         response = requests.post(api_url, params=params)
         response.raise_for_status()  
         print(f"Log added successfully: {response.text}")
-        return {"status": "success", "api_response": response.text}
     except requests.RequestException as e:
         print(f"Error adding log: {e}")
-        return {"status": "error", "message": str(e)}
-
-    
-
 
 enter = {}
 exit = {}
 counted_enter = []
 counted_exit = []
-
 enter2 = {}
 exit2 = {}
 counted_enter2 = []
 counted_exit2 = []
 
-
 def process_frame(frame, frame_count, frame_skip=3):
+    """
+    Processes a frame using your YOLO-based detection logic.
+    Returns the annotated frame.
+    """
     global enter, exit, counted_enter, counted_exit
     global enter2, exit2, counted_enter2, counted_exit2
     global active_people, entered_zone
@@ -102,9 +96,7 @@ def process_frame(frame, frame_count, frame_skip=3):
         class_ids = results[0].boxes.cls.int().cpu().tolist()
         track_ids = results[0].boxes.id.int().cpu().tolist()
         confidences = results[0].boxes.conf.cpu().tolist()
-        for box, class_id, track_id, conf in zip(
-            boxes, class_ids, track_ids, confidences
-        ):
+        for box, class_id, track_id, conf in zip(boxes, class_ids, track_ids, confidences):
             c = names[class_id]
             x1, y1, x2, y2 = box
             point = (x1, y2)
@@ -113,9 +105,7 @@ def process_frame(frame, frame_count, frame_skip=3):
                 if result0 >= 0:
                     enter[track_id] = point
                 if track_id in enter:
-                    result1 = cv2.pointPolygonTest(
-                        np.array(area2, np.int32), point, False
-                    )
+                    result1 = cv2.pointPolygonTest(np.array(area2, np.int32), point, False)
                     if result1 >= 0:
                         cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 0, 255), 2)
                         cvzone.putTextRect(frame, f"{track_id}", (x1, y1), 1, 1)
@@ -126,9 +116,7 @@ def process_frame(frame, frame_count, frame_skip=3):
                 if result02 >= 0:
                     exit[track_id] = point
                 if track_id in exit:
-                    result03 = cv2.pointPolygonTest(
-                        np.array(area1, np.int32), point, False
-                    )
+                    result03 = cv2.pointPolygonTest(np.array(area1, np.int32), point, False)
                     if result03 >= 0:
                         cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 0, 255), 2)
                         cvzone.putTextRect(frame, f"{track_id}", (x1, y1), 1, 1)
@@ -140,9 +128,7 @@ def process_frame(frame, frame_count, frame_skip=3):
                 if result2 >= 0:
                     enter2[track_id] = point
                 if track_id in enter2:
-                    result3 = cv2.pointPolygonTest(
-                        np.array(area4, np.int32), point, False
-                    )
+                    result3 = cv2.pointPolygonTest(np.array(area4, np.int32), point, False)
                     if result3 >= 0:
                         cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 0, 255), 2)
                         cvzone.putTextRect(frame, f"{track_id}", (x1, y1), 1, 1)
@@ -154,9 +140,7 @@ def process_frame(frame, frame_count, frame_skip=3):
                 if result22 >= 0:
                     exit2[track_id] = point
                 if track_id in exit2:
-                    result33 = cv2.pointPolygonTest(
-                        np.array(area3, np.int32), point, False
-                    )
+                    result33 = cv2.pointPolygonTest(np.array(area3, np.int32), point, False)
                     if result33 >= 0:
                         cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 0, 255), 2)
                         cvzone.putTextRect(frame, f"{track_id}", (x1, y1), 1, 1)
@@ -164,42 +148,40 @@ def process_frame(frame, frame_count, frame_skip=3):
                         if track_id not in counted_exit2:
                             counted_exit2.append(track_id)
                             add_log(c, 2)
-
     active_people = len(counted_enter) - len(counted_exit)
     entered_zone = len(counted_enter)
     return frame
 
+latest_frame = None
+frame_lock = threading.Lock()
 
-def generate():
-    global cap
-    rtsp_url = "rtsp://admin:Mmmycash@6699@mycash.ddns.net:56100?tcp"
-    # rtsp_url = 'testVid.mp4'
-    cap = cv2.VideoCapture(rtsp_url)
-    frame_skip = 3
-    frame_count = 0
-    while True:
-        ret, frame = cap.read()
-        if not ret:
-            print("Failed to read frame, attempting to reconnect...")
-            cap.release()
-            cv2.waitKey(1000)
-            cap = cv2.VideoCapture(rtsp_url)
-            continue
-        frame_count += 1
-        processed_frame = process_frame(frame, frame_count, frame_skip)
-        if processed_frame is None:
-            continue
-        _, buffer = cv2.imencode(".jpg", processed_frame)
-        frame_bytes = buffer.tobytes()
-        yield (
-            b"--frame\r\n" b"Content-Type: image/jpeg\r\n\r\n" + frame_bytes + b"\r\n"
-        )
-
+def update_latest_frame(frame):
+    """
+    Encodes the processed frame as JPEG and saves it in a global variable.
+    Called from the streamer thread.
+    """
+    global latest_frame
+    ret, buffer = cv2.imencode(".jpg", frame)
+    if not ret:
+        return
+    frame_bytes = buffer.tobytes()
+    with frame_lock:
+        latest_frame = frame_bytes
 
 @app.route("/video_feed")
 def video_feed():
-    return Response(generate(), mimetype="multipart/x-mixed-replace; boundary=frame")
-
+    def generate_frames():
+        while True:
+            with frame_lock:
+                frame = latest_frame
+            if frame is None:
+                time.sleep(0.01)
+                continue
+            yield (b"--frame\r\n"
+                   b"Content-Type: image/jpeg\r\n\r\n" + frame + b"\r\n")
+            time.sleep(0.03)  # Adjust for desired frame rate
+    return Response(generate_frames(),
+                    mimetype="multipart/x-mixed-replace; boundary=frame")
 
 @app.route("/statistics")
 def statistics():
@@ -208,12 +190,14 @@ def statistics():
     db.child("statistics").set(stats)
     return jsonify(stats)
 
-
 @app.route("/logs")
 def get_logs():
     global logs
     return jsonify(logs)
 
-
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5001)
+    from streamer import generate as start_streaming
+    producer_thread = threading.Thread(target=start_streaming, daemon=True)
+    producer_thread.start()
+
+    app.run(host="0.0.0.0", port=5001, threaded=True)
