@@ -8,6 +8,11 @@ rtsp_url = "rtsp://admin:Mmmycash@6699@mycash.ddns.net:56100?tcp"
 ffmpeg_cmd = [
     "ffmpeg",
     "-y",
+    "-re",
+    "-rtbufsize",
+    "100M",
+    "-stream_loop",
+    "-1",
     "-rtsp_transport",
     "tcp",
     "-i",
