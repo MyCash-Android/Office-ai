@@ -14,7 +14,7 @@ ffmpeg_cmd = [
     "-i",
     rtsp_url,
     "-rtbufsize",
-    "200M",
+    "400M",
     "-vf",
     "scale=1280:720",
     "-r",
