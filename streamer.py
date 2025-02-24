@@ -1,7 +1,8 @@
 import cv2
 import subprocess
 import time
-from app import process_frame, update_latest_frame
+import numpy as np
+from app import process_frame
 
 rtsp_url = "rtsp://admin:Mmmycash@6699@mycash.ddns.net:56100?tcp"
 
@@ -14,7 +15,7 @@ ffmpeg_cmd = [
     "-i",
     rtsp_url,
     "-rtbufsize",
-    "100M",
+    "400M",
     "-vf",
     "scale=1280:720",
     "-r",
@@ -41,14 +42,12 @@ ffmpeg_cmd = [
     "/var/www/html/hls/office.m3u8",
 ]
 
-
+ffmpeg_process = subprocess.Popen(ffmpeg_cmd, stdin=subprocess.PIPE)
 def generate():
     cap = cv2.VideoCapture(rtsp_url)
     if not cap.isOpened():
         print("ERROR: Unable to open RTSP stream. Check camera URL.")
         return
-
-    ffmpeg_process = subprocess.Popen(ffmpeg_cmd, stdin=subprocess.PIPE)
 
     while True:
         ret, frame = cap.read()
@@ -59,19 +58,7 @@ def generate():
             cap = cv2.VideoCapture(rtsp_url)
             continue
 
-        processed_frame = process_frame(frame, frame_count=0, frame_skip=1)
-        if processed_frame is None:
-            continue
-
-        processed_frame = cv2.cvtColor(processed_frame, cv2.COLOR_BGR2YUV)
-
-        try:
-            ffmpeg_process.stdin.write(processed_frame.tobytes())
-        except Exception as e:
-            print("Error writing to ffmpeg:", e)
-
-        update_latest_frame(processed_frame)
-
+        process_frame(frame, frame_count=0, frame_skip=1)
 
 if __name__ == "__main__":
     try:
