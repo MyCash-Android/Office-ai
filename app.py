@@ -197,6 +197,7 @@ def get_logs():
 def cards():
     global cards_given
     card = {"Number of cards given": cards_given}
+    db.child("cards").set(card)
     return jsonify(card)
 
 if __name__ == "__main__":
@@ -205,4 +206,3 @@ if __name__ == "__main__":
     producer_thread.start()
 
     app.run(host="0.0.0.0", port=5001, threaded=True)
-
