@@ -48,7 +48,7 @@ def generate():
     if not cap.isOpened():
         print("ERROR: Unable to open RTSP stream. Check camera URL.")
         return
-
+    frame_count=0
     while True:
         ret, frame = cap.read()
         if not ret:
@@ -58,7 +58,8 @@ def generate():
             cap = cv2.VideoCapture(rtsp_url)
             continue
 
-        process_frame(frame, frame_count=0, frame_skip=1)
+        process_frame(frame, frame_count=frame_count, frame_skip=1)
+        frame_count += 1
 
 if __name__ == "__main__":
     try:
