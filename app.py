@@ -40,8 +40,8 @@ entered_zone = 0
 logs = []
 
 def add_log(person_id, action):
-    if person_id == 'P1': person_id = 1
-    if person_id == 'P2': person_id = 2
+    if person_id == 'P1': person_id = 31
+    if person_id == 'P2': person_id = 32
     global logs
     log_data = {
         "time": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
