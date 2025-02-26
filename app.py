@@ -147,16 +147,16 @@ def process_frame(frame, frame_count, frame_skip=1):
                             add_log(c, 2)
             if "Card" in c:
                 cards_given += 1
-            active_people = len(counted_enter) - len(counted_exit)
-            entered_zone = len(counted_enter)
-            stats = {"active_people": active_people, "entered_zone": entered_zone}
-            card = {"Number of cards given": cards_given}
-            try:
-                print("Updating Firebase with:", stats, card)
-                db.child("statistics").set(stats)
-                db.child("cards").set(card)
-            except Exception as e:
-                print(f"Error updating Firebase: {e}")
+        active_people = len(counted_enter) - len(counted_exit)
+        entered_zone = len(counted_enter)
+        stats = {"active_people": active_people, "entered_zone": entered_zone}
+        card = {"Number of cards given": cards_given}
+        try:
+            print("Updating Firebase with:", stats, card)
+            db.child("statistics").set(stats)
+            db.child("cards").set(card)
+        except Exception as e:
+            print(f"Error updating Firebase: {e}")
 
 """latest_frame = None
 frame_lock = threading.Lock()
