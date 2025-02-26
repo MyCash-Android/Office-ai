@@ -153,6 +153,10 @@ def process_frame(frame, frame_count, frame_skip=1):
                 cards_given+1
     active_people = len(counted_enter) - len(counted_exit)
     entered_zone = len(counted_enter)
+    stats = {"active_people": active_people, "entered_zone": entered_zone}
+    db.child("statistics").set(stats)
+    card = {"Number of cards given": cards_given}
+    db.child("cards").set(card)
 
 """latest_frame = None
 frame_lock = threading.Lock()
@@ -185,7 +189,6 @@ def video_feed():
 def statistics():
     global active_people, entered_zone
     stats = {"active_people": active_people, "entered_zone": entered_zone}
-    db.child("statistics").set(stats)
     return jsonify(stats)
 
 @app.route("/logs")
@@ -197,7 +200,6 @@ def get_logs():
 def cards():
     global cards_given
     card = {"Number of cards given": cards_given}
-    db.child("cards").set(card)
     return jsonify(card)
 
 if __name__ == "__main__":
