@@ -4,8 +4,8 @@ import time
 import numpy as np
 from app import process_frame
 
-#rtsp_url = "rtsp://admin:Mmmycash@6699@mycash.ddns.net:56100?tcp"
-rtsp_url = "testVid.mp4"
+rtsp_url = "rtsp://admin:Mmmycash@6699@mycash.ddns.net:56100?tcp"
+#rtsp_url = "testVid.mp4"
 
 ffmpeg_cmd = [
     "ffmpeg",
