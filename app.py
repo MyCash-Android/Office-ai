@@ -132,7 +132,7 @@ def process_frame(frame, frame_count, frame_skip=1):
                         cv2.circle(frame, point, 4, (255, 0, 0), -1)
                         if track_id not in counted_enter2:
                             counted_enter2.append(track_id)
-                            #add_log(c, 1)
+                            add_log(c, 1)
                 result22 = cv2.pointPolygonTest(np.array(area4, np.int32), point, False)
                 if result22 >= 0:
                     exit2[track_id] = point
@@ -144,7 +144,7 @@ def process_frame(frame, frame_count, frame_skip=1):
                         cv2.circle(frame, point, 4, (255, 0, 0), -1)
                         if track_id not in counted_exit2:
                             counted_exit2.append(track_id)
-                            #add_log(c, 2)
+                            add_log(c, 2)
             if "Card" in c:
                 cards_given += 1
     active_people = len(counted_enter) - len(counted_exit)
