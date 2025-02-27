@@ -50,7 +50,7 @@ def add_log(person_id, action):
     }
     logs.append(log_data)
     current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    api_url = "https://backai.mycashtest.com/apiAdmin/employee/create_log"
+    api_url = "https://backai.mycashtest.com/apiAdmin/employee"
     params = {
         "employee_id": person_id,
         "type": action,
