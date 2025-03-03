@@ -67,12 +67,12 @@ def add_log(person_id, action):
 
 enter = {}
 exit = {}
-counted_enter = []
-counted_exit = []
+counted_enter = {}
+counted_exit = {}
 enter2 = {}
 exit2 = {}
-counted_enter2 = []
-counted_exit2 = []
+counted_enter2 = {}
+counted_exit2 = {}
 cards_given = 0
 
 def process_frame(frame, frame_count, frame_skip=1):
@@ -107,8 +107,8 @@ def process_frame(frame, frame_count, frame_skip=1):
                         cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 0, 255), 2)
                         cvzone.putTextRect(frame, f"{track_id}", (x1, y1), 1, 1)
                         cv2.circle(frame, point, 4, (255, 0, 0), -1)
-                        if track_id not in counted_enter:
-                            counted_enter.append(track_id)
+                        counted_enter[track_id] = counted_enter.get(track_id, 0) + 1
+
                 result02 = cv2.pointPolygonTest(np.array(area2, np.int32), point, False)
                 if result02 >= 0:
                     exit[track_id] = point
@@ -118,8 +118,11 @@ def process_frame(frame, frame_count, frame_skip=1):
                         cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 0, 255), 2)
                         cvzone.putTextRect(frame, f"{track_id}", (x1, y1), 1, 1)
                         cv2.circle(frame, point, 4, (255, 0, 0), -1)
-                        if track_id not in counted_exit:
-                            counted_exit.append(track_id)
+                        counted_exit[track_id] = counted_exit.get(track_id, 0) + 1
+                        if track_id in enter and track_id in exit:
+                            del enter[track_id]
+                            del exit[track_id]
+
             if "P1" in c or "P2" in c:
                 result2 = cv2.pointPolygonTest(np.array(area3, np.int32), point, False)
                 if result2 >= 0:
@@ -130,9 +133,9 @@ def process_frame(frame, frame_count, frame_skip=1):
                         cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 0, 255), 2)
                         cvzone.putTextRect(frame, f"{track_id}", (x1, y1), 1, 1)
                         cv2.circle(frame, point, 4, (255, 0, 0), -1)
-                        if track_id not in counted_enter2:
-                            counted_enter2.append(track_id)
-                            add_log(c, 1)
+                        counted_enter2[track_id] = counted_enter2.get(track_id, 0) + 1
+                        add_log(c, 1)
+
                 result22 = cv2.pointPolygonTest(np.array(area4, np.int32), point, False)
                 if result22 >= 0:
                     exit2[track_id] = point
@@ -142,13 +145,17 @@ def process_frame(frame, frame_count, frame_skip=1):
                         cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 0, 255), 2)
                         cvzone.putTextRect(frame, f"{track_id}", (x1, y1), 1, 1)
                         cv2.circle(frame, point, 4, (255, 0, 0), -1)
-                        if track_id not in counted_exit2:
-                            counted_exit2.append(track_id)
-                            add_log(c, 2)
+                        counted_exit2[track_id] = counted_exit2.get(track_id, 0) + 1
+                        add_log(c, 2)
+                        if track_id in enter2 and track_id in exit2:
+                            del enter2[track_id]
+                            del exit2[track_id]
+
             if "Card" in c:
                 cards_given += 1
-    active_people = len(counted_enter) - len(counted_exit)
-    entered_zone = len(counted_enter)
+    active_people = sum(counted_enter.values()) - sum(counted_exit.values())
+    entered_zone = sum(counted_enter.values())
+
     stats = {"active_people": active_people, "entered_zone": entered_zone}
     card = {"Number of cards given": cards_given}
     try:
