@@ -59,7 +59,7 @@ def add_log(person_id, action):
     if len(logs) > 100:
         logs.pop(0)
     try:
-        response = requests.post(api_url, json=params, timeout=3)
+        response = requests.post(api_url, params=params)
         response.raise_for_status()  
         print(f"Log added successfully: {response.text}")
     except requests.RequestException as e:
