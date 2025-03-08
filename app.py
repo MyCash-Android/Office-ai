@@ -134,7 +134,22 @@ def process_frame(frame, frame_count, frame_skip=1):
                         cvzone.putTextRect(frame, f"{track_id}", (x1, y1), 1, 1)
                         cv2.circle(frame, point, 4, (255, 0, 0), -1)
                         counted_enter2[track_id] = counted_enter2.get(track_id, 0) + 1
-                        add_log(c, 1)
+                        #add_log(c, 1)
+                        if c == 'P1': person_id = 31
+                        if c == 'P2': person_id = 32
+                        current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                        api_url = "https://backai.mycashtest.com/apiAdmin/employee/create_log?employee_id=32&type=1&date=2025-03-09 01:01"
+                        params = {
+                        "employee_id": c,
+                        "type": 1,
+                        "date": current_time
+                        }
+                        try:
+                            response = requests.post(api_url, params=params)
+                            response.raise_for_status()  
+                            print(f"Log added successfully: {response.text}")
+                        except requests.RequestException as e:
+                            print(f"Error adding log: {e}")
 
                 result22 = cv2.pointPolygonTest(np.array(area4, np.int32), point, False)
                 if result22 >= 0:
@@ -146,7 +161,22 @@ def process_frame(frame, frame_count, frame_skip=1):
                         cvzone.putTextRect(frame, f"{track_id}", (x1, y1), 1, 1)
                         cv2.circle(frame, point, 4, (255, 0, 0), -1)
                         counted_exit2[track_id] = counted_exit2.get(track_id, 0) + 1
-                        add_log(c, 2)
+                        #add_log(c, 2)
+                        if c == 'P1': person_id = 31
+                        if c == 'P2': person_id = 32
+                        current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                        api_url = "https://backai.mycashtest.com/apiAdmin/employee/create_log?employee_id=32&type=1&date=2025-03-09 01:01"
+                        params = {
+                        "employee_id": c,
+                        "type": 2,
+                        "date": current_time
+                        }
+                        try:
+                            response = requests.post(api_url, params=params)
+                            response.raise_for_status()  
+                            print(f"Log added successfully: {response.text}")
+                        except requests.RequestException as e:
+                            print(f"Error adding log: {e}")
                         if track_id in enter2 and track_id in exit2:
                             del enter2[track_id]
                             del exit2[track_id]
