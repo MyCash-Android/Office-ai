@@ -135,10 +135,10 @@ def process_frame(frame, frame_count, frame_skip=1):
                         cv2.circle(frame, point, 4, (255, 0, 0), -1)
                         counted_enter2[track_id] = counted_enter2.get(track_id, 0) + 1
                         #add_log(c, 1)
-                        if c == 'P1': person_id = 31
-                        if c == 'P2': person_id = 32
+                        if c == 'P1': c = 31
+                        if c == 'P2': c = 32
                         current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-                        api_url = "https://backai.mycashtest.com/apiAdmin/employee/create_log?employee_id=32&type=1&date=2025-03-09 01:01"
+                        api_url = "https://backai.mycashtest.com/apiAdmin/employee/create_log"
                         params = {
                             "employee_id": c,
                             "type": 1,
@@ -162,10 +162,10 @@ def process_frame(frame, frame_count, frame_skip=1):
                         cv2.circle(frame, point, 4, (255, 0, 0), -1)
                         counted_exit2[track_id] = counted_exit2.get(track_id, 0) + 1
                         #add_log(c, 2)
-                        if c == 'P1': person_id = 31
-                        if c == 'P2': person_id = 32
+                        if c == 'P1': c = 31
+                        if c == 'P2': c = 32
                         current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-                        api_url = "https://backai.mycashtest.com/apiAdmin/employee/create_log?employee_id=32&type=1&date=2025-03-09 01:01"
+                        api_url = "https://backai.mycashtest.com/apiAdmin/employee/create_log"
                         params = {
                             "employee_id": c,
                             "type": 2,
