@@ -140,9 +140,9 @@ def process_frame(frame, frame_count, frame_skip=1):
                         current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                         api_url = "https://backai.mycashtest.com/apiAdmin/employee/create_log?employee_id=32&type=1&date=2025-03-09 01:01"
                         params = {
-                        "employee_id": c,
-                        "type": 1,
-                        "date": current_time
+                            "employee_id": c,
+                            "type": 1,
+                            "date": current_time
                         }
                         try:
                             response = requests.post(api_url, params=params)
@@ -167,9 +167,9 @@ def process_frame(frame, frame_count, frame_skip=1):
                         current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                         api_url = "https://backai.mycashtest.com/apiAdmin/employee/create_log?employee_id=32&type=1&date=2025-03-09 01:01"
                         params = {
-                        "employee_id": c,
-                        "type": 2,
-                        "date": current_time
+                            "employee_id": c,
+                            "type": 2,
+                            "date": current_time
                         }
                         try:
                             response = requests.post(api_url, params=params)
