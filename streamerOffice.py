@@ -46,7 +46,7 @@ def generate():
                 continue
 
         if frame_count % frame_skip == 0:
-            process_frame2(frame, frame_count=frame_count, frame_skip=frame_skip)
+            process_frame(frame, frame_count=frame_count, frame_skip=frame_skip)
 
         prev_frame = masked_gray_frame.copy() 
         frame_count += 1
