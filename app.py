@@ -75,7 +75,7 @@ counted_enter2 = {}
 counted_exit2 = {}
 cards_given = 0
 
-def process_frame(frame, frame_count, frame_skip=1):
+def process_frame(frame, frame_count, frame_skip):
     global enter, exit, counted_enter, counted_exit
     global enter2, exit2, counted_enter2, counted_exit2
     global active_people, entered_zone
@@ -101,38 +101,35 @@ def process_frame(frame, frame_count, frame_skip=1):
                 result0 = cv2.pointPolygonTest(np.array(area1, np.int32), point, False)
                 if result0 >= 0:
                     enter[track_id] = point
+                    print("Area 1")
                 if track_id in enter:
                     result1 = cv2.pointPolygonTest(np.array(area2, np.int32), point, False)
                     if result1 >= 0:
-                        cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 0, 255), 2)
-                        cvzone.putTextRect(frame, f"{track_id}", (x1, y1), 1, 1)
-                        cv2.circle(frame, point, 4, (255, 0, 0), -1)
+                        print("Area 2")
                         counted_enter[track_id] = counted_enter.get(track_id, 0) + 1
 
                 result02 = cv2.pointPolygonTest(np.array(area2, np.int32), point, False)
                 if result02 >= 0:
                     exit[track_id] = point
+                    print("Area 2")
                 if track_id in exit:
                     result03 = cv2.pointPolygonTest(np.array(area1, np.int32), point, False)
                     if result03 >= 0:
-                        cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 0, 255), 2)
-                        cvzone.putTextRect(frame, f"{track_id}", (x1, y1), 1, 1)
-                        cv2.circle(frame, point, 4, (255, 0, 0), -1)
+                        print("Area 1")
                         counted_exit[track_id] = counted_exit.get(track_id, 0) + 1
-                        if track_id in enter and track_id in exit:
-                            del enter[track_id]
-                            del exit[track_id]
+                        #if track_id in enter and track_id in exit:
+                            #del enter[track_id]
+                            #del exit[track_id]
 
             if "P1" in c or "P2" in c:
                 result2 = cv2.pointPolygonTest(np.array(area3, np.int32), point, False)
                 if result2 >= 0:
                     enter2[track_id] = point
+                    print("Area 3")
                 if track_id in enter2:
                     result3 = cv2.pointPolygonTest(np.array(area4, np.int32), point, False)
                     if result3 >= 0:
-                        cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 0, 255), 2)
-                        cvzone.putTextRect(frame, f"{track_id}", (x1, y1), 1, 1)
-                        cv2.circle(frame, point, 4, (255, 0, 0), -1)
+                        print("Area 4")
                         counted_enter2[track_id] = counted_enter2.get(track_id, 0) + 1
                         #add_log(c, 1)
                         if c == 'P1': c = 31
@@ -154,12 +151,11 @@ def process_frame(frame, frame_count, frame_skip=1):
                 result22 = cv2.pointPolygonTest(np.array(area4, np.int32), point, False)
                 if result22 >= 0:
                     exit2[track_id] = point
+                    print("Area 4")
                 if track_id in exit2:
                     result33 = cv2.pointPolygonTest(np.array(area3, np.int32), point, False)
                     if result33 >= 0:
-                        cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 0, 255), 2)
-                        cvzone.putTextRect(frame, f"{track_id}", (x1, y1), 1, 1)
-                        cv2.circle(frame, point, 4, (255, 0, 0), -1)
+                        print("Area 3")
                         counted_exit2[track_id] = counted_exit2.get(track_id, 0) + 1
                         #add_log(c, 2)
                         if c == 'P1': c = 31
@@ -177,9 +173,9 @@ def process_frame(frame, frame_count, frame_skip=1):
                             print(f"Log added successfully: {response.text}")
                         except requests.RequestException as e:
                             print(f"Error adding log: {e}")
-                        if track_id in enter2 and track_id in exit2:
-                            del enter2[track_id]
-                            del exit2[track_id]
+                        #if track_id in enter2 and track_id in exit2:
+                         #   del enter2[track_id]
+                          #  del exit2[track_id]
 
             if "Card" in c:
                 cards_given += 1
