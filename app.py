@@ -83,10 +83,10 @@ def process_frame(frame, frame_count, frame_skip):
     if frame_count % frame_skip != 0:
         return None
     frame = cv2.resize(frame, (1020, 600))
-    area1 = [(327, 292), (322, 328), (730, 328), (730, 292)]
-    area2 = [(322, 336), (312, 372), (730, 372), (730, 336)]
-    area3 = [(338, 78), (338, 98), (720, 98), (720, 78)]
-    area4 = [(341, 107), (341, 130), (720, 130), (720, 107)]
+    area1 = [(327, 292), (322, 328), (880, 328), (880, 292)]
+    area2 = [(322, 336), (312, 372), (880, 372), (880, 336)]
+    area3 = [(338, 78), (338, 98), (870, 98), (870, 78)]
+    area4 = [(341, 107), (341, 130), (870, 130), (870, 107)]
     results = model.track(frame, persist=True)
     if results and results[0].boxes is not None and results[0].boxes.id is not None:
         boxes = results[0].boxes.xyxy.int().cpu().tolist()
