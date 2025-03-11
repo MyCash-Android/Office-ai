@@ -13,7 +13,7 @@ def generate():
         return
 
     frame_count = 0
-    frame_skip = 1
+    frame_skip = 4
     prev_frame = None  
 
     timestamp_x, timestamp_y, timestamp_width, timestamp_height = 0, 25, 400, 40  
