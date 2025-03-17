@@ -32,9 +32,9 @@ jobs:
           pip install -r requirements.txt
           echo "Restarting Flask application with Gunicorn..."
           PID=$(lsof -ti:5001) && [ -n "$PID" ] && kill -9 $PID || echo "No process found on port 5001"
-          PIDS=$(ps aux | grep streamer.py | awk '{print $2}') && [ -n "$PIDS" ] && kill -9 $PIDS || echo "No process found with name streamer.py"
+          PIDS=$(ps aux | grep streamerOffice.py | awk '{print $2}') && [ -n "$PIDS" ] && kill -9 $PIDS || echo "No process found with name streamerOffice.py"
           sleep 2
           nohup gunicorn -w 3 -b 0.0.0.0:5001 --timeout 3600 app:app > gunicorn.log 2>&1 &
-          nohup python3 streamer.py > streamer.log 2>&1 &
+          nohup python3 streamerOffice.py > streamerOffice.log 2>&1 &
           echo "Deployment completed successfully!"
           EOF
