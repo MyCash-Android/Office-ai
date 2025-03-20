@@ -39,40 +39,14 @@ active_people = 0
 entered_zone = 0
 logs = []
 
-def add_log(person_id, action):
-    if person_id == 'P1': person_id = 31
-    if person_id == 'P2': person_id = 32
-    global logs
-    log_data = {
-        "time": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-        "person_id": str(person_id),
-        "action": action,
-    }
-    logs.append(log_data)
-    current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    api_url = "https://backai.mycashtest.com/apiAdmin/employee/create_log"
-    params = {
-        "employee_id": person_id,
-        "type": action,
-        "date": current_time
-    }
-    if len(logs) > 100:
-        logs.pop(0)
-    try:
-        response = requests.post(api_url, params=params)
-        response.raise_for_status()  
-        print(f"Log added successfully: {response.text}")
-    except requests.RequestException as e:
-        print(f"Error adding log: {e}")
-
 enter = {}
 exit = {}
-counted_enter = {}
-counted_exit = {}
+counted_enter = []
+counted_exit = []
 enter2 = {}
 exit2 = {}
-counted_enter2 = {}
-counted_exit2 = {}
+counted_enter2 = []
+counted_exit2 = []
 cards_given = 0
 
 def process_frame(frame, frame_count, frame_skip):
@@ -80,8 +54,6 @@ def process_frame(frame, frame_count, frame_skip):
     global enter2, exit2, counted_enter2, counted_exit2
     global active_people, entered_zone
     global cards_given
-    if frame_count % frame_skip != 0:
-        return None
     frame = cv2.resize(frame, (1020, 600))
     area1 = [(327, 292), (322, 328), (880, 328), (880, 292)]
     area2 = [(322, 336), (312, 372), (880, 372), (880, 336)]
@@ -106,7 +78,9 @@ def process_frame(frame, frame_count, frame_skip):
                     result1 = cv2.pointPolygonTest(np.array(area2, np.int32), point, False)
                     if result1 >= 0:
                         print("Area 2")
-                        counted_enter[track_id] = counted_enter.get(track_id, 0) + 1
+                        if track_id not in counted_enter:
+                            counted_enter.append(track_id)
+                        #counted_enter[track_id] = counted_enter.get(track_id, 0) + 1
 
                 result02 = cv2.pointPolygonTest(np.array(area2, np.int32), point, False)
                 if result02 >= 0:
@@ -116,10 +90,12 @@ def process_frame(frame, frame_count, frame_skip):
                     result03 = cv2.pointPolygonTest(np.array(area1, np.int32), point, False)
                     if result03 >= 0:
                         print("Area 1")
-                        counted_exit[track_id] = counted_exit.get(track_id, 0) + 1
-                        #if track_id in enter and track_id in exit:
-                            #del enter[track_id]
-                            #del exit[track_id]
+                        if track_id not in counted_exit:
+                            counted_exit.append(track_id)
+                        #counted_exit[track_id] = counted_exit.get(track_id, 0) + 1
+                        if track_id in enter and track_id in exit:
+                            del enter[track_id]
+                            del exit[track_id]
 
             if "P1" in c or "P2" in c:
                 result2 = cv2.pointPolygonTest(np.array(area3, np.int32), point, False)
@@ -130,23 +106,25 @@ def process_frame(frame, frame_count, frame_skip):
                     result3 = cv2.pointPolygonTest(np.array(area4, np.int32), point, False)
                     if result3 >= 0:
                         print("Area 4")
-                        counted_enter2[track_id] = counted_enter2.get(track_id, 0) + 1
+                        if track_id not in counted_enter2:
+                            counted_enter2.append(track_id)
+                            if c == 'P1': c = 31
+                            if c == 'P2': c = 32
+                            current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                            api_url = "https://backai.mycashtest.com/apiAdmin/employee/create_log"
+                            params = {
+                                "employee_id": c,
+                                "type": 1,
+                                "date": current_time
+                            }   
+                            try:
+                                response = requests.post(api_url, params=params)
+                                response.raise_for_status()  
+                                print(f"Log added successfully: {response.text}")
+                            except requests.RequestException as e:
+                                print(f"Error adding log: {e}")
+                        #counted_enter2[track_id] = counted_enter2.get(track_id, 0) + 1
                         #add_log(c, 1)
-                        if c == 'P1': c = 31
-                        if c == 'P2': c = 32
-                        current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-                        api_url = "https://backai.mycashtest.com/apiAdmin/employee/create_log"
-                        params = {
-                            "employee_id": c,
-                            "type": 1,
-                            "date": current_time
-                        }
-                        try:
-                            response = requests.post(api_url, params=params)
-                            response.raise_for_status()  
-                            print(f"Log added successfully: {response.text}")
-                        except requests.RequestException as e:
-                            print(f"Error adding log: {e}")
 
                 result22 = cv2.pointPolygonTest(np.array(area4, np.int32), point, False)
                 if result22 >= 0:
@@ -156,31 +134,33 @@ def process_frame(frame, frame_count, frame_skip):
                     result33 = cv2.pointPolygonTest(np.array(area3, np.int32), point, False)
                     if result33 >= 0:
                         print("Area 3")
-                        counted_exit2[track_id] = counted_exit2.get(track_id, 0) + 1
+                        if track_id not in counted_exit2:
+                            counted_exit2.append(track_id)
+                            if c == 'P1': c = 31
+                            if c == 'P2': c = 32
+                            current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                            api_url = "https://backai.mycashtest.com/apiAdmin/employee/create_log"
+                            params = {
+                                "employee_id": c,
+                                "type": 2,
+                                "date": current_time
+                            }
+                            try:
+                                response = requests.post(api_url, params=params)
+                                response.raise_for_status()  
+                                print(f"Log added successfully: {response.text}")
+                            except requests.RequestException as e:
+                                print(f"Error adding log: {e}")
+                        #counted_exit2[track_id] = counted_exit2.get(track_id, 0) + 1
                         #add_log(c, 2)
-                        if c == 'P1': c = 31
-                        if c == 'P2': c = 32
-                        current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-                        api_url = "https://backai.mycashtest.com/apiAdmin/employee/create_log"
-                        params = {
-                            "employee_id": c,
-                            "type": 2,
-                            "date": current_time
-                        }
-                        try:
-                            response = requests.post(api_url, params=params)
-                            response.raise_for_status()  
-                            print(f"Log added successfully: {response.text}")
-                        except requests.RequestException as e:
-                            print(f"Error adding log: {e}")
-                        #if track_id in enter2 and track_id in exit2:
-                         #   del enter2[track_id]
-                          #  del exit2[track_id]
+                        if track_id in enter2 and track_id in exit2:
+                            del enter2[track_id]
+                            del exit2[track_id]
 
             if "Card" in c:
                 cards_given += 1
-    active_people = sum(counted_enter.values()) - sum(counted_exit.values())
-    entered_zone = sum(counted_enter.values())
+    active_people = (len(counted_enter) - len(counted_exit))
+    entered_zone = len(counted_enter)
 
     stats = {"active_people": active_people, "entered_zone": entered_zone}
     card = {"Number of cards given": cards_given}
