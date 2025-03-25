@@ -35,6 +35,6 @@ jobs:
           PIDS=$(ps aux | grep streamerOffice.py | awk '{print $2}') && [ -n "$PIDS" ] && kill -9 $PIDS || echo "No process found with name streamerOffice.py"
           sleep 2
           nohup gunicorn -w 3 -b 0.0.0.0:5001 --timeout 3600 app:app > gunicorn.log 2>&1 &
-          nohup python3 streamerOffice.py > streamerOffice.log 2>&1 &
+          nohup taskset -c 2,3 python3 streamerOffice.py > streamerOffice.log 2>&1 &
           echo "Deployment completed successfully!"
           EOF
