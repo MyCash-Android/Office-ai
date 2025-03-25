@@ -69,33 +69,28 @@ def process_frame(frame, frame_count, frame_skip):
             c = names[class_id]
             x1, y1, x2, y2 = box
             point = (x1, y2)
-            if "Person" in c:
-                result0 = cv2.pointPolygonTest(np.array(area1, np.int32), point, False)
+            if "Person" in c: #if the detection is a person
+                result0 = cv2.pointPolygonTest(np.array(area1, np.int32), point, False) #check if it entered area1
                 if result0 >= 0:
-                    enter[track_id] = point
+                    enter[track_id] = point #if it entered, add its point to enter dict to its corresponding id
                     print("Area 1")
-                if track_id in enter:
-                    result1 = cv2.pointPolygonTest(np.array(area2, np.int32), point, False)
+                if track_id in enter: #if its id is in enter dict
+                    result1 = cv2.pointPolygonTest(np.array(area2, np.int32), point, False) #check if it also entered area2
                     if result1 >= 0:
                         print("Area 2")
-                        if track_id not in counted_enter:
-                            counted_enter.append(track_id)
-                        #counted_enter[track_id] = counted_enter.get(track_id, 0) + 1
+                        counted_enter.append(track_id) #add the id to counted_enter array 
+                        del enter[track_id]
 
-                result02 = cv2.pointPolygonTest(np.array(area2, np.int32), point, False)
+                result02 = cv2.pointPolygonTest(np.array(area2, np.int32), point, False) #check if it entered area2
                 if result02 >= 0:
-                    exit[track_id] = point
+                    exit[track_id] = point #if it did, add its point to exit dict to its corresponding id
                     print("Area 2")
-                if track_id in exit:
-                    result03 = cv2.pointPolygonTest(np.array(area1, np.int32), point, False)
+                if track_id in exit: #if its id is in exit dict
+                    result03 = cv2.pointPolygonTest(np.array(area1, np.int32), point, False) #check if it entered area1
                     if result03 >= 0:
                         print("Area 1")
-                        if track_id not in counted_exit:
-                            counted_exit.append(track_id)
-                        #counted_exit[track_id] = counted_exit.get(track_id, 0) + 1
-                        if track_id in enter and track_id in exit:
-                            del enter[track_id]
-                            del exit[track_id]
+                        counted_exit.append(track_id) #add the id to the counted_exit array
+                        del exit[track_id]
 
             if "P1" in c or "P2" in c:
                 result2 = cv2.pointPolygonTest(np.array(area3, np.int32), point, False)
@@ -106,25 +101,25 @@ def process_frame(frame, frame_count, frame_skip):
                     result3 = cv2.pointPolygonTest(np.array(area4, np.int32), point, False)
                     if result3 >= 0:
                         print("Area 4")
-                        if track_id not in counted_enter2:
-                            counted_enter2.append(track_id)
-                            if c == 'P1': c = 31
-                            if c == 'P2': c = 32
-                            current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-                            api_url = "https://backai.mycashtest.com/apiAdmin/employee/create_log"
-                            params = {
-                                "employee_id": c,
-                                "type": 1,
-                                "date": current_time
-                            }   
-                            try:
-                                response = requests.post(api_url, params=params)
-                                response.raise_for_status()  
-                                print(f"Log added successfully: {response.text}")
-                            except requests.RequestException as e:
-                                print(f"Error adding log: {e}")
-                        #counted_enter2[track_id] = counted_enter2.get(track_id, 0) + 1
-                        #add_log(c, 1)
+                        counted_enter2.append(track_id)
+                        if c == 'P1': c = 31
+                        if c == 'P2': c = 32
+                        current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                        api_url = "https://backai.mycashtest.com/apiAdmin/employee/create_log"
+                        params = {
+                            "employee_id": c,
+                            "type": 1,
+                            "date": current_time
+                        }   
+                        try:
+                            response = requests.post(api_url, params=params)
+                            response.raise_for_status()  
+                            print(f"Log added successfully: {response.text}")
+                        except requests.RequestException as e:
+                            print(f"Error adding log: {e}")
+                        del enter2[track_id]
+                        if c == 31: c = 'P1'
+                        if c == 32: c = 'P2'
 
                 result22 = cv2.pointPolygonTest(np.array(area4, np.int32), point, False)
                 if result22 >= 0:
@@ -134,28 +129,25 @@ def process_frame(frame, frame_count, frame_skip):
                     result33 = cv2.pointPolygonTest(np.array(area3, np.int32), point, False)
                     if result33 >= 0:
                         print("Area 3")
-                        if track_id not in counted_exit2:
-                            counted_exit2.append(track_id)
-                            if c == 'P1': c = 31
-                            if c == 'P2': c = 32
-                            current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-                            api_url = "https://backai.mycashtest.com/apiAdmin/employee/create_log"
-                            params = {
-                                "employee_id": c,
-                                "type": 2,
-                                "date": current_time
-                            }
-                            try:
-                                response = requests.post(api_url, params=params)
-                                response.raise_for_status()  
-                                print(f"Log added successfully: {response.text}")
-                            except requests.RequestException as e:
-                                print(f"Error adding log: {e}")
-                        #counted_exit2[track_id] = counted_exit2.get(track_id, 0) + 1
-                        #add_log(c, 2)
-                        if track_id in enter2 and track_id in exit2:
-                            del enter2[track_id]
-                            del exit2[track_id]
+                        counted_exit2.append(track_id)
+                        if c == 'P1': c = 31
+                        if c == 'P2': c = 32
+                        current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                        api_url = "https://backai.mycashtest.com/apiAdmin/employee/create_log"
+                        params = {
+                            "employee_id": c,
+                            "type": 2,
+                            "date": current_time
+                        }
+                        try:
+                            response = requests.post(api_url, params=params)
+                            response.raise_for_status()  
+                            print(f"Log added successfully: {response.text}")
+                        except requests.RequestException as e:
+                            print(f"Error adding log: {e}")
+                        del exit2[track_id]
+                        if c == 31: c = 'P1'
+                        if c == 32: c = 'P2'
 
             if "Card" in c:
                 cards_given += 1
@@ -171,49 +163,6 @@ def process_frame(frame, frame_count, frame_skip):
     except Exception as e:
         print(f"Error updating Firebase: {e}")
 
-"""latest_frame = None
-frame_lock = threading.Lock()
-
-def update_latest_frame(frame):
-    global latest_frame
-    ret, buffer = cv2.imencode(".jpg", frame)
-    if not ret:
-        return
-    frame_bytes = buffer.tobytes()
-    with frame_lock:
-        latest_frame = frame_bytes"""
-
-"""@app.route("/video_feed")
-def video_feed():
-    def generate_frames():
-        while True:
-            with frame_lock:
-                frame = latest_frame
-            if frame is None:
-                time.sleep(0.01)
-                continue
-            yield (b"--frame\r\n"
-                   b"Content-Type: image/jpeg\r\n\r\n" + frame + b"\r\n")
-            time.sleep(0.03)  # Adjust for desired frame rate
-    return Response(generate_frames(),
-                    mimetype="multipart/x-mixed-replace; boundary=frame")"""
-
-@app.route("/statistics")
-def statistics():
-    global active_people, entered_zone
-    stats = {"active_people": active_people, "entered_zone": entered_zone}
-    return jsonify(stats)
-
-@app.route("/logs")
-def get_logs():
-    global logs
-    return jsonify(logs)
-
-@app.route("/cards")
-def cards():
-    global cards_given
-    card = {"Number of cards given": cards_given}
-    return jsonify(card)
 
 if __name__ == "__main__":
     from streamer import generate as start_streaming
