@@ -29,7 +29,7 @@ def generate():
             frame=q.get()
             if frame_count % frame_skip == 0:
                 process_frame(frame, frame_count=frame_count, frame_skip=frame_skip)
-                frame_count += 1
+            frame_count += 1
 """
 def generate():
     cap = cv2.VideoCapture(rtsp_url)
