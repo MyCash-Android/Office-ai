@@ -22,7 +22,7 @@ def receive():
 
 def generate():
     frame_count = 0
-    frame_skip = 1
+    frame_skip = 6
     print("Start generate")
     while True:
         if q.empty() != True:
