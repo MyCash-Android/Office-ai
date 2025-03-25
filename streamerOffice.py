@@ -4,7 +4,8 @@ import time
 import numpy as np
 from app import process_frame
 
-rtsp_url = "rtsp://admin:Mmmycash@6699@mycash.ddns.net:56100?tcp"
+#rtsp_url = "rtsp://admin:Mmmycash@6699@mycash.ddns.net:56100?tcp"
+rtsp_url = "testVid.mp4"
 
 def generate():
     cap = cv2.VideoCapture(rtsp_url)
@@ -13,7 +14,7 @@ def generate():
         return
 
     frame_count = 0
-    frame_skip = 4
+    frame_skip = 1
     prev_frame = None  
 
     timestamp_x, timestamp_y, timestamp_width, timestamp_height = 0, 25, 400, 40  
