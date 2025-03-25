@@ -1,16 +1,16 @@
-import queue
+#import queue
 import cv2
 import subprocess
 import time
 import numpy as np
-import threading
+#import threading
 from app import process_frame
 
-q=queue.Queue()
+#q=queue.Queue()
 
 rtsp_url = "rtsp://admin:Mmmycash@6699@mycash.ddns.net:56100?tcp"
 #rtsp_url = "testVid.mp4"
-
+"""
 def receive():
     print("Start recieve")
     cap = cv2.VideoCapture(rtsp_url)
@@ -37,7 +37,7 @@ def generate():
         return
 
     frame_count = 0
-    frame_skip = 1
+    frame_skip = 12
     prev_frame = None  
 
     timestamp_x, timestamp_y, timestamp_width, timestamp_height = 0, 25, 400, 40  
@@ -75,14 +75,14 @@ def generate():
         prev_frame = masked_gray_frame.copy() 
         frame_count += 1
         time.sleep(0.05)
-"""
 
 if __name__ == "__main__":
     try:
-        p1=threading.Thread(target=receive)
+        generate()
+        """p1=threading.Thread(target=receive)
         p2=threading.Thread(target=generate)
         p1.start()
-        p2.start()
+        p2.start()"""
     except KeyboardInterrupt:
         print("Streaming interrupted by user.")
     except Exception as e:
