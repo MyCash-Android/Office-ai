@@ -22,13 +22,12 @@ def receive():
 
 def generate():
     frame_count = 0
-    frame_skip = 4
+    frame_skip = 1
     print("Start generate")
     while True:
         if q.empty() != True:
             frame=q.get()
-            if frame_count % frame_skip == 0:
-                process_frame(frame, frame_count=frame_count, frame_skip=frame_skip)
+            process_frame(frame, frame_count=frame_count, frame_skip=frame_skip)
             frame_count += 1
 """
 def generate():
