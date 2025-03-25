@@ -3,6 +3,7 @@ flask==3.1.0
 flask-cors==5.0.0
 opencv-python==4.11.0.86
 numpy==2.2.1
+lap==0.5.12
 ultralytics==8.3.62
 cvzone==1.6.1
 pyrebase4 == 4.8.0
