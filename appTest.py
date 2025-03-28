@@ -62,7 +62,7 @@ class PeopleTracker:
         self.active_people = 0
         self.entered_zone = 0
         self.logs = []
-        
+
         # Tracking variables using deque for better performance
         self.enter = deque(maxlen=100)
         self.exit = deque(maxlen=100)
@@ -96,68 +96,141 @@ class PeopleTracker:
                 confidences = results[0].boxes.conf.cpu().numpy()
                 
                 current_tracks = set()
-                
+
                 for idx, (box, class_id, conf) in enumerate(zip(boxes, class_ids, confidences)):
                     track_id = track_ids[idx] if track_ids is not None else idx
                     c = self.names[int(class_id)]
                     x1, y1, x2, y2 = box.astype(int)
                     point = (x1, y2)
                     current_tracks.add(track_id)
-                    
+
+                    color = (0, 255, 0) if "Person" in c else (255, 0, 0)
+                    cv2.rectangle(frame, (x1, y1), (x2, y2), color, 2)
+
+                    # Draw label
+                    label = f"{c} {track_id}"
+                    cv2.putText(frame, label, (x1, y1 - 10),
+                                cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 1)
+
+                    # Draw tracking point
+                    cv2.circle(frame, point, 5, (0, 0, 255), -1)
+
                     # Person tracking
                     if "Person" in c:
                         self.handle_person_movement(track_id, point)
-                    
+
                     # Employee tracking
                     if "P1" in c or "P2" in c:
                         self.handle_employee_movement(track_id, point, c)
-                    
+
                     # Card detection
                     if "Card" in c:
                         self.cards_given += 1
-                
-                # Cleanup old tracks
+
                 self.cleanup_tracks(current_tracks)
-                
-                # Update statistics
                 self.update_statistics()
+
+                # Draw counting information
+                cv2.putText(frame, f"Active People: {self.active_people}", (10, 30),
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2)
+                cv2.putText(frame, f"Total Entered: {len(self.counted_enter)}", (10, 70),
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 255), 2)
+                cv2.putText(frame, f"Total Exited: {len(self.counted_exit)}", (10, 110),
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 0, 255), 2)
+
+                # Draw entry/exit zones with labels
+                cv2.polylines(frame, [self.areas['area1']], True, (0, 255, 0), 2)  # Entry zone (green)
+                cv2.putText(frame, "ENTRY", tuple(self.areas['area1'][0]),
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 2)
+
+                cv2.polylines(frame, [self.areas['area2']], True, (0, 0, 255), 2)  # Exit zone (red)
+                cv2.putText(frame, "EXIT", tuple(self.areas['area2'][0]),
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 255), 2)
+
+                # Show the frame
+#                cv2.imshow("Tracking Visualization", frame)
+ #               if cv2.waitKey(1) & 0xFF == ord('q'):  # Press 'q' to quit
+  #                  raise KeyboardInterrupt("User stopped visualization")
 
         except Exception as e:
             logger.error(f"Frame processing error: {str(e)}", exc_info=True)
 
+    # def handle_person_movement(self, track_id, point):
+    #     # Area1 -> Area2 = Enter
+    #     if cv2.pointPolygonTest(self.areas['area1'], point, False) >= 0:
+    #         self.enter.append(track_id)
+    #
+    #     if track_id in self.enter and cv2.pointPolygonTest(self.areas['area2'], point, False) >= 0:
+    #         self.counted_enter.add(track_id)
+    #         logger.info(f"Person {track_id} entered zone")
+    #
+    #     # Area2 -> Area1 = Exit
+    #     if cv2.pointPolygonTest(self.areas['area2'], point, False) >= 0:
+    #         self.exit.append(track_id)
+    #
+    #     if track_id in self.exit and cv2.pointPolygonTest(self.areas['area1'], point, False) >= 0:
+    #         self.counted_exit.add(track_id)
+    #         logger.info(f"Person {track_id} exited zone")
+    #
+    # def handle_employee_movement(self, track_id, point, employee_type):
+    #     # Area3 -> Area4 = Enter
+    #     if cv2.pointPolygonTest(self.areas['area3'], point, False) >= 0:
+    #         self.enter2.append(track_id)
+    #
+    #     if track_id in self.enter2 and cv2.pointPolygonTest(self.areas['area4'], point, False) >= 0:
+    #         self.counted_enter2.add(track_id)
+    #         self.log_employee_entry(employee_type)
+    #
+    #     # Area4 -> Area3 = Exit
+    #     if cv2.pointPolygonTest(self.areas['area4'], point, False) >= 0:
+    #         self.exit2.append(track_id)
+    #
+    #     if track_id in self.exit2 and cv2.pointPolygonTest(self.areas['area3'], point, False) >= 0:
+    #         self.counted_exit2.add(track_id)
+    #         self.log_employee_exit(employee_type)
+
     def handle_person_movement(self, track_id, point):
-        # Area1 -> Area2 = Enter
-        if cv2.pointPolygonTest(self.areas['area1'], point, False) >= 0:
+        test_point = (int(point[0]), int(point[1]))
+        in_entry = cv2.pointPolygonTest(self.areas['area1'], test_point, False) >= 0
+        in_exit = cv2.pointPolygonTest(self.areas['area2'], test_point, False) >= 0
+
+        # Entry logic
+        if in_entry and track_id not in self.enter:
             self.enter.append(track_id)
-        
-        if track_id in self.enter and cv2.pointPolygonTest(self.areas['area2'], point, False) >= 0:
+
+        if track_id in self.enter and in_exit and track_id not in self.counted_enter:
             self.counted_enter.add(track_id)
             logger.info(f"Person {track_id} entered zone")
-        
-        # Area2 -> Area1 = Exit
-        if cv2.pointPolygonTest(self.areas['area2'], point, False) >= 0:
+
+        # Exit logic
+        if in_exit and track_id not in self.exit:
             self.exit.append(track_id)
-        
-        if track_id in self.exit and cv2.pointPolygonTest(self.areas['area1'], point, False) >= 0:
+
+        if track_id in self.exit and in_entry and track_id not in self.counted_exit:
             self.counted_exit.add(track_id)
             logger.info(f"Person {track_id} exited zone")
 
+
     def handle_employee_movement(self, track_id, point, employee_type):
+        test_point = (int(point[0]), int(point[1]))
+
         # Area3 -> Area4 = Enter
-        if cv2.pointPolygonTest(self.areas['area3'], point, False) >= 0:
+        if cv2.pointPolygonTest(self.areas['area3'], test_point, False) >= 0:
             self.enter2.append(track_id)
-        
-        if track_id in self.enter2 and cv2.pointPolygonTest(self.areas['area4'], point, False) >= 0:
+
+        if track_id in self.enter2 and cv2.pointPolygonTest(self.areas['area4'], test_point, False) >= 0:
             self.counted_enter2.add(track_id)
             self.log_employee_entry(employee_type)
-        
+
         # Area4 -> Area3 = Exit
-        if cv2.pointPolygonTest(self.areas['area4'], point, False) >= 0:
+        if cv2.pointPolygonTest(self.areas['area4'], test_point, False) >= 0:
             self.exit2.append(track_id)
-        
-        if track_id in self.exit2 and cv2.pointPolygonTest(self.areas['area3'], point, False) >= 0:
+
+        if track_id in self.exit2 and cv2.pointPolygonTest(self.areas['area3'], test_point, False) >= 0:
             self.counted_exit2.add(track_id)
             self.log_employee_exit(employee_type)
+
+
 
     def log_employee_entry(self, employee_type):
         emp_id = 31 if employee_type == 'P1' else 32
@@ -194,24 +267,29 @@ class PeopleTracker:
 
     def update_statistics(self):
         with stats_lock:
+            # Calculate active people (entered - exited)
             self.active_people = len(self.counted_enter) - len(self.counted_exit)
             self.entered_zone = len(self.counted_enter)
+
+            # Ensure we don't have negative counts
+            if self.active_people < 0:
+                self.active_people = 0
+                logger.warning("Negative people count detected, resetting to 0")
+
             stats = {
-                "active_people": max(0, self.active_people),
-                "entered_zone": self.entered_zone
+                "active_people": self.active_people,
+                "entered_zone": self.entered_zone,
+                "exited_zone": len(self.counted_exit)
             }
-            card_stats = {"Number of cards given": self.cards_given}
-            
+
             try:
                 db.child("statistics").set(stats)
-                db.child("cards").set(card_stats)
                 logger.debug(f"Updated stats: {stats}")
             except Exception as e:
                 logger.error(f"Firebase update failed: {str(e)}")
 
 # Initialize the tracker
 tracker = PeopleTracker()
-
 
 def process_frame(frame, frame_count, frame_skip):
     tracker.process_frame(frame, frame_count, frame_skip)

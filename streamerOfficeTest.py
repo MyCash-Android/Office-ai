@@ -5,7 +5,7 @@ import cv2
 import numpy as np
 import os
 import sys
-from app import process_frame, frame_queue, stats_lock
+from appTest import process_frame, frame_queue, stats_lock
 from collections import deque
 import threading
 
@@ -19,11 +19,17 @@ RTSP_URL = "rtsp://admin:Mmmycash@6699@mycash.ddns.net:56100/" + \
            "&probesize=5000000&flush_packets=1" + \
            "&reorder_queue_size=5000&max_delay=1000000"
 
+
+#testing with Video file:
+VIDEO_FILE = "testVid.mp4"
+
+
+
 RECONNECT_DELAY = 3  # seconds
 MAX_RETRIES = 10
 FRAME_SKIP = 6  # Process every 6th frame
 FRAME_TIMEOUT = 15  # seconds without frames before reconnecting
-MAX_CONSECUTIVE_ERRORS = 10
+MAX_CONSECUTIVE_ERRORS = 100
 
 class VideoStreamer:
     def __init__(self):
@@ -46,9 +52,11 @@ class VideoStreamer:
         ]
         
         for backend, name in backends:
-            cap = cv2.VideoCapture(RTSP_URL, backend)
+           # cap = cv2.VideoCapture(RTSP_URL, backend)
+            cap = cv2.VideoCapture(VIDEO_FILE)
             if cap.isOpened():
-                logger.info(f"Connected using {name} backend")
+                #logger.info(f"Connected using {name} backend")
+                logger.info(f"Could not open video file: {VIDEO_FILE}")
                 self.configure_capture(cap)
                 return cap
         
@@ -126,7 +134,7 @@ def process_frames():
     frame_count = 0
     while True:
         try:
-            frame = frame_queue.get(timeout=3.0)
+            frame = frame_queue.get(timeout=1.0)
             process_frame(frame, frame_count, 1)
             frame_count += 1
         except queue.Empty:
