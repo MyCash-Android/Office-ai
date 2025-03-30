@@ -124,75 +124,41 @@ class PeopleTracker:
 
         except Exception as e:
             logger.error(f"Frame processing error: {str(e)}", exc_info=True)
-"""
+
     def handle_person_movement(self, track_id, point):
-        # Area1 -> Area2 = Enter
-        if cv2.pointPolygonTest(self.areas['area1'], point, False) >= 0:
-            self.enter.append(track_id)
-        
-        if track_id in self.enter and cv2.pointPolygonTest(self.areas['area2'], point, False) >= 0:
-            self.counted_enter.add(track_id)
-            logger.info(f"Person {track_id} entered zone")
-        
-        # Area2 -> Area1 = Exit
-        if cv2.pointPolygonTest(self.areas['area2'], point, False) >= 0:
-            self.exit.append(track_id)
-        
-        if track_id in self.exit and cv2.pointPolygonTest(self.areas['area1'], point, False) >= 0:
-            self.counted_exit.add(track_id)
-            logger.info(f"Person {track_id} exited zone")
-"""
-    def handle_person_movement(self, track_id, point):
-            test_point = (int(point[0]), int(point[1]))
+        test_point = (int(point[0]), int(point[1]))
 
 
             # Check if person is in entry/exit zones
-            in_entry = cv2.pointPolygonTest(self.areas['area1'], test_point, False) >= 0
-            in_exit = cv2.pointPolygonTest(self.areas['area2'], test_point, False) >= 0
+        in_entry = cv2.pointPolygonTest(self.areas['area1'], test_point, False) >= 0
+        in_exit = cv2.pointPolygonTest(self.areas['area2'], test_point, False) >= 0
 
-            # Entry logic (must pass from entry → exit zone)
-            if in_entry and track_id not in self.enter and track_id not in self.counted_exit:
-                self.enter.append(track_id)
+        # Entry logic (must pass from entry → exit zone)
+        if in_entry and track_id not in self.enter and track_id not in self.counted_exit:
+            self.enter.append(track_id)
 
-            if in_exit and track_id in self.enter and track_id not in self.counted_enter:
-                self.counted_enter.add(track_id)
+        if in_exit and track_id in self.enter and track_id not in self.counted_enter:
+            self.counted_enter.add(track_id)
      #           self.active_people += 1
-                logger.info(f"Person {track_id} entered. Active: {self.active_people}")
+            logger.info(f"Person {track_id} entered. Active: {self.active_people}")
 
             # Exit logic (must pass from exit → entry zone)
-            if in_exit and track_id not in self.exit and track_id not in self.counted_exit:
-                self.exit.append(track_id)
+        if in_exit and track_id not in self.exit and track_id not in self.counted_exit:
+            self.exit.append(track_id)
 
-            if in_entry and track_id in self.exit and track_id not in self.counted_exit:
-                self.counted_exit.add(track_id)
+        if in_entry and track_id in self.exit and track_id not in self.counted_exit:
+            self.counted_exit.add(track_id)
     #            self.active_people = max(0, self.active_people - 1)  # Prevent negative counts
-                logger.info(f"Person {track_id} exited. Active: {self.active_people}")
-"""
-    def handle_employee_movement(self, track_id, point, employee_type):
-        # Area3 -> Area4 = Enter
-        if cv2.pointPolygonTest(self.areas['area3'], point, False) >= 0:
-            self.enter2.append(track_id)
-        
-        if track_id in self.enter2 and cv2.pointPolygonTest(self.areas['area4'], point, False) >= 0:
-            self.counted_enter2.add(track_id)
-            self.log_employee_entry(employee_type)
-        
-        # Area4 -> Area3 = Exit
-        if cv2.pointPolygonTest(self.areas['area4'], point, False) >= 0:
-            self.exit2.append(track_id)
-        
-        if track_id in self.exit2 and cv2.pointPolygonTest(self.areas['area3'], point, False) >= 0:
-            self.counted_exit2.add(track_id)
-            self.log_employee_exit(employee_type)
-"""
+            logger.info(f"Person {track_id} exited. Active: {self.active_people}")
+
     def handle_employee_movement(self, track_id, point, employee_type):
  #       test_point = (int(point[0]), int(point[1]))
-        test_point = (int(point[0],int(point[1])
+        test_point = (int(point[0],int(point[1])))
 
         #in_enter = self.is_intersect(np.array([[x1,y1],[x2,y1],[x2,y2],[x1,y2]],np.int32).reshape((-1,1,2)),self.areas['area3'])
         #in_exit = self.is_intersect(np.array([[x1,y1],[x2,y1],[x2,y2],[x1,y2]],np.int32).reshape((-1,1,2)),self.areas['area4'])
         in_enter = cv2.pointPolygonTest(np.array(self.areas['area3'],np.int32),test_point,False)
-        in_exit = cv2.pointPolygonTest(np.array(self.areas['area4'],np.int32),test_poiint,False)
+        in_exit = cv2.pointPolygonTest(np.array(self.areas['area4'],np.int32),test_point,False)
         # Area3 -> Area4 = Enter
 
         if in_enter and track_id not in self.enter2 and track_id not in self.counted_enter2:
@@ -206,7 +172,7 @@ class PeopleTracker:
         # Area4 -> Area3 = Exit
         if in_exit and track_id not in self.exit2:
             self.exit2.append(track_id)
-            logger.info('track id appended to exit queue'
+            logger.info('track id appended to exit queue')
         if track_id in self.exit2 and in_enter and track_id not in self.counted_exit2:
             self.counted_exit2.add(track_id)
             self.log_employee_exit(employee_type)
@@ -235,14 +201,7 @@ class PeopleTracker:
 
     def cleanup_tracks(self, current_tracks):
         # Remove tracks that are no longer detected
-    """    for track_id in list(self.counted_enter):
-            if track_id not in current_tracks:
-                self.counted_enter.discard(track_id)
-        
-        for track_id in list(self.counted_exit):
-            if track_id not in current_tracks:
-                self.counted_exit.discard(track_id)
-    """
+
        pass
 
     def update_statistics(self):
