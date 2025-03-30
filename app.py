@@ -80,8 +80,8 @@ class PeopleTracker:
         self.areas = {
             'area1': np.array([(327, 292), (322, 328), (880, 328), (880, 292)], np.int32),
             'area2': np.array([(322, 336), (312, 372), (880, 372), (880, 336)], np.int32),
-            'area3': np.array([(338, 78), (338, 98), (870, 98), (870, 78)], np.int32),
-            'area4': np.array([(341, 107), (341, 130), (870, 130), (870, 107)], np.int32)
+            'area3': np.array([(338, 18), (338, 98), (870, 98), (870, 18)], np.int32),
+            'area4': np.array([(341, 110), (341, 190), (870, 190), (870, 110)], np.int32)
         }
 
     def process_frame(self, frame, frame_count, frame_skip):
@@ -124,7 +124,7 @@ class PeopleTracker:
 
         except Exception as e:
             logger.error(f"Frame processing error: {str(e)}", exc_info=True)
-
+"""
     def handle_person_movement(self, track_id, point):
         # Area1 -> Area2 = Enter
         if cv2.pointPolygonTest(self.areas['area1'], point, False) >= 0:
@@ -141,7 +141,33 @@ class PeopleTracker:
         if track_id in self.exit and cv2.pointPolygonTest(self.areas['area1'], point, False) >= 0:
             self.counted_exit.add(track_id)
             logger.info(f"Person {track_id} exited zone")
+"""
+    def handle_person_movement(self, track_id, point):
+            test_point = (int(point[0]), int(point[1]))
 
+
+            # Check if person is in entry/exit zones
+            in_entry = cv2.pointPolygonTest(self.areas['area1'], test_point, False) >= 0
+            in_exit = cv2.pointPolygonTest(self.areas['area2'], test_point, False) >= 0
+
+            # Entry logic (must pass from entry → exit zone)
+            if in_entry and track_id not in self.enter and track_id not in self.counted_exit:
+                self.enter.append(track_id)
+
+            if in_exit and track_id in self.enter and track_id not in self.counted_enter:
+                self.counted_enter.add(track_id)
+     #           self.active_people += 1
+                logger.info(f"Person {track_id} entered. Active: {self.active_people}")
+
+            # Exit logic (must pass from exit → entry zone)
+            if in_exit and track_id not in self.exit and track_id not in self.counted_exit:
+                self.exit.append(track_id)
+
+            if in_entry and track_id in self.exit and track_id not in self.counted_exit:
+                self.counted_exit.add(track_id)
+    #            self.active_people = max(0, self.active_people - 1)  # Prevent negative counts
+                logger.info(f"Person {track_id} exited. Active: {self.active_people}")
+"""
     def handle_employee_movement(self, track_id, point, employee_type):
         # Area3 -> Area4 = Enter
         if cv2.pointPolygonTest(self.areas['area3'], point, False) >= 0:
@@ -158,7 +184,32 @@ class PeopleTracker:
         if track_id in self.exit2 and cv2.pointPolygonTest(self.areas['area3'], point, False) >= 0:
             self.counted_exit2.add(track_id)
             self.log_employee_exit(employee_type)
+"""
+    def handle_employee_movement(self, track_id, point, employee_type):
+ #       test_point = (int(point[0]), int(point[1]))
+        test_point = (int(point[0],int(point[1])
 
+        #in_enter = self.is_intersect(np.array([[x1,y1],[x2,y1],[x2,y2],[x1,y2]],np.int32).reshape((-1,1,2)),self.areas['area3'])
+        #in_exit = self.is_intersect(np.array([[x1,y1],[x2,y1],[x2,y2],[x1,y2]],np.int32).reshape((-1,1,2)),self.areas['area4'])
+        in_enter = cv2.pointPolygonTest(np.array(self.areas['area3'],np.int32),test_point,False)
+        in_exit = cv2.pointPolygonTest(np.array(self.areas['area4'],np.int32),test_poiint,False)
+        # Area3 -> Area4 = Enter
+
+        if in_enter and track_id not in self.enter2 and track_id not in self.counted_enter2:
+            self.enter2.append(track_id)
+            logger.info("track id appended to queue")
+        if track_id in self.enter2 and in_exit and track_id not in self.counted_enter2:
+            self.counted_enter2.add(track_id)
+            self.log_employee_entry(employee_type)
+            logger.info('employee entry logged')
+
+        # Area4 -> Area3 = Exit
+        if in_exit and track_id not in self.exit2:
+            self.exit2.append(track_id)
+            logger.info('track id appended to exit queue'
+        if track_id in self.exit2 and in_enter and track_id not in self.counted_exit2:
+            self.counted_exit2.add(track_id)
+            self.log_employee_exit(employee_type)
     def log_employee_entry(self, employee_type):
         emp_id = 31 if employee_type == 'P1' else 32
         self.send_log(emp_id, 1)
@@ -184,30 +235,40 @@ class PeopleTracker:
 
     def cleanup_tracks(self, current_tracks):
         # Remove tracks that are no longer detected
-        for track_id in list(self.counted_enter):
+    """    for track_id in list(self.counted_enter):
             if track_id not in current_tracks:
                 self.counted_enter.discard(track_id)
         
         for track_id in list(self.counted_exit):
             if track_id not in current_tracks:
                 self.counted_exit.discard(track_id)
+    """
+       pass
 
     def update_statistics(self):
-        with stats_lock:
-            self.active_people = len(self.counted_enter) - len(self.counted_exit)
-            self.entered_zone = len(self.counted_enter)
-            stats = {
-                "active_people": max(0, self.active_people),
-                "entered_zone": self.entered_zone
-            }
-            card_stats = {"Number of cards given": self.cards_given}
-            
-            try:
-                db.child("statistics").set(stats)
-                db.child("cards").set(card_stats)
-                logger.debug(f"Updated stats: {stats}")
-            except Exception as e:
-                logger.error(f"Firebase update failed: {str(e)}")
+     with stats_lock:
+        self.active_people = (len(self.counted_enter)+len(self.counted_enter2))-(len(self.counted_exit2)+len(self.counted_exit))
+        self.entered_zone = len(self.counted_enter)+len(self.counted_enter2)
+        self.exited_zone = len(self.counted_exit)+len(self.counted_exit2)
+        stats = {
+            "active_people": max(0, self.active_people),
+            "entered_zone": self.entered_zone,
+            "exited_zone": self.exited_zone,
+            "last_updated": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        }
+
+        card_stats = {
+            "Number of cards given": self.cards_given,
+            "last_updated": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        }
+
+        try:
+            # Update Firebase (using `.update()` instead of `.set()` to avoid overwriting)
+            db.child("statistics").update(stats)
+            db.child("cards").update(card_stats)
+            logger.info(f"Updated Firebase: Active People = {self.active_people}")
+        except Exception as e:
+            logger.error(f"Firebase update failed: {str(e)}")
 
 # Initialize the tracker
 tracker = PeopleTracker()
