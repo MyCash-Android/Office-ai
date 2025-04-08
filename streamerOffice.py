@@ -5,7 +5,7 @@ import cv2
 import numpy as np
 import os
 import sys
-from app import process_frame, frame_queue, stats_lock
+from appTest import process_frame, frame_queue, stats_lock
 from collections import deque
 import threading
 
